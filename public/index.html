@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decode the Number</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ═══════════════════ PARTICLES BACKGROUND ═══════════════════ -->
+  <canvas id="particlesCanvas"></canvas>
+
+  <!-- ═══════════════════ LANDING SCREEN ═══════════════════ -->
+  <div id="screen-landing" class="screen active">
+    <div class="landing-card glass-card">
+      <div class="logo-section">
+        <div class="logo-icon">🔢</div>
+        <h1 class="game-title">Decode<br><span>the Number</span></h1>
+        <p class="tagline">Challenge a friend. Crack the code. Win the game!</p>
+        <div class="online-indicator" id="onlineIndicator">
+          <span class="online-dot"></span>
+          <span id="onlineCount">0</span> online
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="playerName">Your Name</label>
+        <input type="text" id="playerName" placeholder="Enter your name…" maxlength="16" />
+      </div>
+
+      <div class="input-group">
+        <label for="numberLength">Number Length</label>
+        <div class="length-selector">
+          <button class="len-btn" data-len="3">3</button>
+          <button class="len-btn active" data-len="4">4</button>
+          <button class="len-btn" data-len="5">5</button>
+          <button class="len-btn" data-len="6">6</button>
+        </div>
+      </div>
+
+      <div class="landing-buttons">
+        <button id="btnQuickMatch" class="btn btn-primary btn-large">
+          <span class="btn-icon">⚡</span> Quick Match
+        </button>
+        <button id="btnCreateRoom" class="btn btn-secondary">
+          <span class="btn-icon">🏠</span> Create Room
+        </button>
+        <button id="btnJoinRoom" class="btn btn-secondary">
+          <span class="btn-icon">🚪</span> Join Room
+        </button>
+      </div>
+
+      <div id="joinRoomSection" class="join-section hidden">
+        <div class="input-group">
+          <label for="roomCodeInput">Room Code</label>
+          <input type="text" id="roomCodeInput" placeholder="Enter 6-letter room code…" maxlength="6" />
+        </div>
+        <button id="btnJoinConfirm" class="btn btn-primary">Join</button>
+      </div>
+
+      <!-- Player Stats Card -->
+      <div class="stats-preview hidden" id="statsPreview">
+        <div class="stats-grid">
+          <div class="mini-stat"><span class="mini-stat-val" id="spGames">0</span><span class="mini-stat-label">Games</span></div>
+          <div class="mini-stat"><span class="mini-stat-val" id="spWins">0</span><span class="mini-stat-label">Wins</span></div>
+          <div class="mini-stat"><span class="mini-stat-val" id="spLosses">0</span><span class="mini-stat-label">Losses</span></div>
+          <div class="mini-stat"><span class="mini-stat-val" id="spWinRate">0%</span><span class="mini-stat-label">Win Rate</span></div>
+          <div class="mini-stat"><span class="mini-stat-val" id="spStreak">0</span><span class="mini-stat-label">Streak</span></div>
+          <div class="mini-stat"><span class="mini-stat-val" id="spBest">0</span><span class="mini-stat-label">Best</span></div>
+        </div>
+      </div>
+
+      <div class="landing-footer">
+        <button id="btnLeaderboard" class="btn btn-small">🏆 Leaderboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ LEADERBOARD MODAL ═══════════════════ -->
+  <div id="leaderboardModal" class="modal-overlay hidden">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <h2>🏆 Leaderboard</h2>
+        <button class="chat-close-btn" id="btnCloseLeaderboard">✕</button>
+      </div>
+      <div class="leaderboard-list" id="leaderboardList">
+        <p class="hint-text">Loading…</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ WAITING SCREEN ═══════════════════ -->
+  <div id="screen-waiting" class="screen">
+    <div class="waiting-card glass-card">
+      <div class="waiting-spinner"></div>
+      <h2>Waiting for Opponent…</h2>
+      <p>Share this room code:</p>
+      <div class="room-code-display" id="waitingRoomCode">------</div>
+      <button id="btnCopyCode" class="btn btn-small">📋 Copy Code</button>
+      <p class="hint-text">Or wait for a quick match player to join.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ SETUP SCREEN ═══════════════════ -->
+  <div id="screen-setup" class="screen">
+    <div class="setup-card glass-card">
+      <h2>🔐 Set Your Secret Number</h2>
+      <p class="setup-info">Choose a <span id="setupNumLength">4</span>-digit number with <strong>no repeating digits</strong>.</p>
+      <p class="opponent-status" id="opponentStatus">Waiting for opponent to set their number…</p>
+
+      <div class="digit-input-section" id="digitInputSection">
+        <!-- Digit boxes generated by JS -->
+      </div>
+
+      <div class="numpad" id="numpad">
+        <button class="numpad-btn" data-digit="1">1</button>
+        <button class="numpad-btn" data-digit="2">2</button>
+        <button class="numpad-btn" data-digit="3">3</button>
+        <button class="numpad-btn" data-digit="4">4</button>
+        <button class="numpad-btn" data-digit="5">5</button>
+        <button class="numpad-btn" data-digit="6">6</button>
+        <button class="numpad-btn" data-digit="7">7</button>
+        <button class="numpad-btn" data-digit="8">8</button>
+        <button class="numpad-btn" data-digit="9">9</button>
+        <button class="numpad-btn numpad-del" data-digit="del">⌫</button>
+        <button class="numpad-btn" data-digit="0">0</button>
+        <button class="numpad-btn numpad-confirm" data-digit="ok" id="btnConfirmSecret">✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ GAME SCREEN ═══════════════════ -->
+  <div id="screen-game" class="screen">
+    <div class="game-layout">
+
+      <!-- Top Bar -->
+      <div class="game-topbar">
+        <div class="player-badge you-badge">
+          <span class="badge-avatar">🧑</span>
+          <span class="badge-name" id="yourNameBadge">You</span>
+        </div>
+        <div class="turn-indicator" id="turnIndicator">
+          <span id="turnText">Your Turn</span>
+        </div>
+        <div class="player-badge opp-badge">
+          <span class="badge-avatar">🤖</span>
+          <span class="badge-name" id="oppNameBadge">Opponent</span>
+        </div>
+      </div>
+
+      <!-- Main game area -->
+      <div class="game-main">
+
+        <!-- Guess History Panel (both players) -->
+        <div class="guess-history-panel" id="guessHistoryPanel">
+          <div class="panel-header">
+            <h3>📜 Guess History</h3>
+            <div class="history-tabs">
+              <button class="history-tab active" data-tab="yours" id="tabYours">Your Guesses</button>
+              <button class="history-tab" data-tab="opponent" id="tabOpponent">Opponent's Guesses</button>
+            </div>
+          </div>
+          <div class="history-list" id="historyYours">
+            <div class="empty-history">No guesses yet. Start guessing!</div>
+          </div>
+          <div class="history-list hidden" id="historyOpponent">
+            <div class="empty-history">Opponent hasn't guessed yet.</div>
+          </div>
+        </div>
+
+        <!-- Guess Input Area -->
+        <div class="guess-input-area" id="guessInputArea">
+          <div class="guess-digit-boxes" id="guessDigitBoxes">
+            <!-- Generated by JS -->
+          </div>
+          <div class="numpad" id="guessNumpad">
+            <button class="numpad-btn" data-digit="1">1</button>
+            <button class="numpad-btn" data-digit="2">2</button>
+            <button class="numpad-btn" data-digit="3">3</button>
+            <button class="numpad-btn" data-digit="4">4</button>
+            <button class="numpad-btn" data-digit="5">5</button>
+            <button class="numpad-btn" data-digit="6">6</button>
+            <button class="numpad-btn" data-digit="7">7</button>
+            <button class="numpad-btn" data-digit="8">8</button>
+            <button class="numpad-btn" data-digit="9">9</button>
+            <button class="numpad-btn numpad-del" data-digit="del">⌫</button>
+            <button class="numpad-btn" data-digit="0">0</button>
+            <button class="numpad-btn numpad-confirm" data-digit="ok" id="btnSubmitGuess">🚀</button>
+          </div>
+          <div class="waiting-turn-msg hidden" id="waitingTurnMsg">
+            ⏳ Waiting for opponent's guess…
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Toggle Button -->
+      <button class="chat-toggle-btn" id="chatToggleBtn">💬 <span class="chat-badge hidden" id="chatBadge">0</span></button>
+
+      <!-- Chat Panel (slide-in sidebar) -->
+      <div class="chat-panel hidden" id="chatPanel">
+        <div class="chat-header">
+          <h3>💬 Chat</h3>
+          <button class="chat-close-btn" id="chatCloseBtn">✕</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-empty">Say hi to your opponent! 👋</div>
+        </div>
+        <div class="emoji-bar" id="emojiBar">
+          <button class="emoji-btn" data-emoji="👍">👍</button>
+          <button class="emoji-btn" data-emoji="😂">😂</button>
+          <button class="emoji-btn" data-emoji="🔥">🔥</button>
+          <button class="emoji-btn" data-emoji="😎">😎</button>
+          <button class="emoji-btn" data-emoji="🤔">🤔</button>
+          <button class="emoji-btn" data-emoji="😱">😱</button>
+          <button class="emoji-btn" data-emoji="🎉">🎉</button>
+          <button class="emoji-btn" data-emoji="💪">💪</button>
+          <button class="emoji-btn" data-emoji="❤️">❤️</button>
+          <button class="emoji-btn" data-emoji="😢">😢</button>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chatInput" placeholder="Type a message…" maxlength="200" />
+          <button class="btn btn-send" id="btnSendChat">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ GAME OVER SCREEN ═══════════════════ -->
+  <div id="screen-gameover" class="screen">
+    <div class="gameover-card glass-card">
+      <div class="confetti-container" id="confettiContainer"></div>
+      <div id="gameoverIcon" class="gameover-icon">🏆</div>
+      <h2 id="gameoverTitle">You Win!</h2>
+      <p id="gameoverSubtitle">Congratulations! You cracked the code!</p>
+
+      <div class="secrets-reveal">
+        <div class="secret-box">
+          <span class="secret-label" id="secretLabel1">Your Number</span>
+          <span class="secret-value" id="secretValue1">1234</span>
+        </div>
+        <div class="secret-box">
+          <span class="secret-label" id="secretLabel2">Opponent's Number</span>
+          <span class="secret-value" id="secretValue2">5678</span>
+        </div>
+      </div>
+
+      <div class="guess-stats">
+        <div class="stat-box">
+          <span class="stat-number" id="statYourGuesses">0</span>
+          <span class="stat-label">Your Guesses</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-number" id="statOppGuesses">0</span>
+          <span class="stat-label">Opponent's Guesses</span>
+        </div>
+      </div>
+
+      <!-- Post-game stats -->
+      <div class="postgame-stats" id="postgameStats">
+        <h3 class="postgame-stats-title">📊 Your Profile Stats</h3>
+        <div class="stats-grid">
+          <div class="mini-stat"><span class="mini-stat-val" id="pgGames">0</span><span class="mini-stat-label">Games</span></div>
+          <div class="mini-stat"><span class="mini-stat-val" id="pgWins">0</span><span class="mini-stat-label">Wins</span></div>
+          <div class="mini-stat"><span class="mini-stat-val" id="pgWinRate">0%</span><span class="mini-stat-label">Win Rate</span></div>
+          <div class="mini-stat"><span class="mini-stat-val" id="pgStreak">0</span><span class="mini-stat-label">Streak</span></div>
+        </div>
+      </div>
+
+      <div class="gameover-buttons">
+        <button id="btnPlayAgain" class="btn btn-primary btn-large">🔄 Play Again</button>
+        <button id="btnExitGame" class="btn btn-secondary">🚪 Exit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ SOUND TOGGLE ═══════════════════ -->
+  <button class="sound-toggle" id="soundToggle" title="Toggle Sound">🔊</button>
+
+  <!-- ═══════════════════ TOAST ═══════════════════ -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/sounds.js"></script>
+  <script src="js/chat.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

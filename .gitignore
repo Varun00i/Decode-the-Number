@@ -1,0 +1,5 @@
+node_modules/
+player-stats.json
+.env
+*.log
+.DS_Store
