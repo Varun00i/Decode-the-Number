@@ -7,33 +7,116 @@
   <link rel="stylesheet" href="css/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
 
   <!-- ═══════════════════ PARTICLES BACKGROUND ═══════════════════ -->
   <canvas id="particlesCanvas"></canvas>
 
-  <!-- ═══════════════════ LANDING SCREEN ═══════════════════ -->
-  <div id="screen-landing" class="screen active">
-    <div class="landing-card glass-card">
+  <!-- ═══════════════════ AMBIENT GLOW ORBS ═══════════════════ -->
+  <div class="ambient-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- ═══════════════════ AUTH SCREEN ═══════════════════ -->
+  <div id="screen-auth" class="screen active">
+    <div class="auth-card glass-card premium-card">
       <div class="logo-section">
-        <div class="logo-icon">🔢</div>
+        <div class="logo-icon-wrapper">
+          <div class="logo-ring"></div>
+          <div class="logo-icon">🔢</div>
+        </div>
         <h1 class="game-title">Decode<br><span>the Number</span></h1>
         <p class="tagline">Challenge a friend. Crack the code. Win the game!</p>
-        <div class="online-indicator" id="onlineIndicator">
-          <span class="online-dot"></span>
-          <span id="onlineCount">0</span> online
+      </div>
+
+      <!-- Login Form -->
+      <div id="authLoginForm" class="auth-form">
+        <div class="input-group floating-label">
+          <input type="text" id="loginUsername" placeholder=" " autocomplete="username" maxlength="16" />
+          <label for="loginUsername">Username</label>
+          <div class="input-glow"></div>
         </div>
+        <div class="input-group floating-label">
+          <input type="password" id="loginPassword" placeholder=" " autocomplete="current-password" />
+          <label for="loginPassword">Password</label>
+          <div class="input-glow"></div>
+        </div>
+        <button id="btnLogin" class="btn btn-primary btn-large btn-shimmer">
+          <span class="btn-text">Sign In</span>
+          <span class="btn-loader hidden"></span>
+        </button>
+        <p class="auth-switch">Don't have an account? <a href="#" id="showSignup">Create one</a></p>
       </div>
 
-      <div class="input-group">
+      <!-- Signup Form -->
+      <div id="authSignupForm" class="auth-form hidden">
+        <div class="input-group floating-label">
+          <input type="text" id="signupUsername" placeholder=" " autocomplete="username" maxlength="16" />
+          <label for="signupUsername">Username</label>
+          <div class="input-glow"></div>
+        </div>
+        <div class="input-group floating-label">
+          <input type="text" id="signupDisplayName" placeholder=" " maxlength="16" />
+          <label for="signupDisplayName">Display Name</label>
+          <div class="input-glow"></div>
+        </div>
+        <div class="input-group floating-label">
+          <input type="password" id="signupPassword" placeholder=" " autocomplete="new-password" />
+          <label for="signupPassword">Password</label>
+          <div class="input-glow"></div>
+        </div>
+        <button id="btnSignup" class="btn btn-primary btn-large btn-shimmer">
+          <span class="btn-text">Create Account</span>
+          <span class="btn-loader hidden"></span>
+        </button>
+        <p class="auth-switch">Already have an account? <a href="#" id="showLogin">Sign in</a></p>
+      </div>
+
+      <!-- Guest Mode -->
+      <div class="guest-divider">
+        <span>or</span>
+      </div>
+      <button id="btnPlayGuest" class="btn btn-ghost btn-large">
+        Play as Guest
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ LANDING SCREEN ═══════════════════ -->
+  <div id="screen-landing" class="screen">
+    <div class="landing-card glass-card premium-card">
+      <!-- User Profile Header -->
+      <div class="profile-header" id="profileHeader">
+        <div class="profile-avatar-wrap">
+          <div class="avatar-ring"></div>
+          <div class="profile-avatar" id="profileAvatar">🧑</div>
+        </div>
+        <div class="profile-info">
+          <span class="profile-name" id="profileName">Player</span>
+          <span class="profile-rank" id="profileRank">Newcomer</span>
+        </div>
+        <button class="btn btn-icon-only" id="btnLogout" title="Logout">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+
+      <div class="online-indicator" id="onlineIndicator">
+        <span class="online-dot"></span>
+        <span id="onlineCount">0</span> online
+      </div>
+
+      <div class="input-group floating-label" id="guestNameGroup">
+        <input type="text" id="playerName" placeholder=" " maxlength="16" />
         <label for="playerName">Your Name</label>
-        <input type="text" id="playerName" placeholder="Enter your name…" maxlength="16" />
+        <div class="input-glow"></div>
       </div>
 
       <div class="input-group">
-        <label for="numberLength">Number Length</label>
+        <label class="small-label">Number Length</label>
         <div class="length-selector">
           <button class="len-btn" data-len="3">3</button>
           <button class="len-btn active" data-len="4">4</button>
@@ -43,27 +126,31 @@
       </div>
 
       <div class="landing-buttons">
-        <button id="btnQuickMatch" class="btn btn-primary btn-large">
+        <button id="btnQuickMatch" class="btn btn-primary btn-large btn-shimmer">
           <span class="btn-icon">⚡</span> Quick Match
         </button>
-        <button id="btnCreateRoom" class="btn btn-secondary">
-          <span class="btn-icon">🏠</span> Create Room
-        </button>
-        <button id="btnJoinRoom" class="btn btn-secondary">
-          <span class="btn-icon">🚪</span> Join Room
-        </button>
+        <div class="btn-row">
+          <button id="btnCreateRoom" class="btn btn-secondary">
+            <span class="btn-icon">🏠</span> Create Room
+          </button>
+          <button id="btnJoinRoom" class="btn btn-secondary">
+            <span class="btn-icon">🚪</span> Join Room
+          </button>
+        </div>
       </div>
 
       <div id="joinRoomSection" class="join-section hidden">
-        <div class="input-group">
+        <div class="input-group floating-label">
+          <input type="text" id="roomCodeInput" placeholder=" " maxlength="6" style="text-transform:uppercase" />
           <label for="roomCodeInput">Room Code</label>
-          <input type="text" id="roomCodeInput" placeholder="Enter 6-letter room code…" maxlength="6" />
+          <div class="input-glow"></div>
         </div>
         <button id="btnJoinConfirm" class="btn btn-primary">Join</button>
       </div>
 
       <!-- Player Stats Card -->
       <div class="stats-preview hidden" id="statsPreview">
+        <h4 class="stats-preview-title">Your Stats</h4>
         <div class="stats-grid">
           <div class="mini-stat"><span class="mini-stat-val" id="spGames">0</span><span class="mini-stat-label">Games</span></div>
           <div class="mini-stat"><span class="mini-stat-val" id="spWins">0</span><span class="mini-stat-label">Wins</span></div>
@@ -75,17 +162,19 @@
       </div>
 
       <div class="landing-footer">
-        <button id="btnLeaderboard" class="btn btn-small">🏆 Leaderboard</button>
+        <button id="btnLeaderboard" class="btn btn-ghost btn-small">🏆 Leaderboard</button>
       </div>
     </div>
   </div>
 
   <!-- ═══════════════════ LEADERBOARD MODAL ═══════════════════ -->
   <div id="leaderboardModal" class="modal-overlay hidden">
-    <div class="modal-card glass-card">
+    <div class="modal-card glass-card premium-card">
       <div class="modal-header">
         <h2>🏆 Leaderboard</h2>
-        <button class="chat-close-btn" id="btnCloseLeaderboard">✕</button>
+        <button class="close-btn" id="btnCloseLeaderboard">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
       <div class="leaderboard-list" id="leaderboardList">
         <p class="hint-text">Loading…</p>
@@ -95,21 +184,28 @@
 
   <!-- ═══════════════════ WAITING SCREEN ═══════════════════ -->
   <div id="screen-waiting" class="screen">
-    <div class="waiting-card glass-card">
-      <div class="waiting-spinner"></div>
-      <h2>Waiting for Opponent…</h2>
+    <div class="waiting-card glass-card premium-card">
+      <div class="waiting-anim">
+        <div class="radar-ring"></div>
+        <div class="radar-ring r2"></div>
+        <div class="radar-dot"></div>
+      </div>
+      <h2>Searching for Opponent…</h2>
       <p>Share this room code:</p>
       <div class="room-code-display" id="waitingRoomCode">------</div>
-      <button id="btnCopyCode" class="btn btn-small">📋 Copy Code</button>
+      <button id="btnCopyCode" class="btn btn-ghost btn-small">📋 Copy Code</button>
       <p class="hint-text">Or wait for a quick match player to join.</p>
     </div>
   </div>
 
   <!-- ═══════════════════ SETUP SCREEN ═══════════════════ -->
   <div id="screen-setup" class="screen">
-    <div class="setup-card glass-card">
-      <h2>🔐 Set Your Secret Number</h2>
-      <p class="setup-info">Choose a <span id="setupNumLength">4</span>-digit number with <strong>no repeating digits</strong>.</p>
+    <div class="setup-card glass-card premium-card">
+      <div class="setup-header">
+        <div class="setup-icon">🔐</div>
+        <h2>Set Your Secret Number</h2>
+        <p class="setup-info">Choose a <span id="setupNumLength">4</span>-digit number with <strong>no repeating digits</strong>.</p>
+      </div>
       <p class="opponent-status" id="opponentStatus">Waiting for opponent to set their number…</p>
 
       <div class="digit-input-section" id="digitInputSection">
@@ -156,7 +252,7 @@
       <div class="game-main">
 
         <!-- Guess History Panel (both players) -->
-        <div class="guess-history-panel" id="guessHistoryPanel">
+        <div class="guess-history-panel glass-panel">
           <div class="panel-header">
             <h3>📜 Guess History</h3>
             <div class="history-tabs">
@@ -192,7 +288,10 @@
             <button class="numpad-btn numpad-confirm" data-digit="ok" id="btnSubmitGuess">🚀</button>
           </div>
           <div class="waiting-turn-msg hidden" id="waitingTurnMsg">
-            ⏳ Waiting for opponent's guess…
+            <div class="pulse-dots">
+              <span></span><span></span><span></span>
+            </div>
+            Waiting for opponent's guess…
           </div>
         </div>
       </div>
@@ -204,7 +303,9 @@
       <div class="chat-panel hidden" id="chatPanel">
         <div class="chat-header">
           <h3>💬 Chat</h3>
-          <button class="chat-close-btn" id="chatCloseBtn">✕</button>
+          <button class="close-btn" id="chatCloseBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
         <div class="chat-messages" id="chatMessages">
           <div class="chat-empty">Say hi to your opponent! 👋</div>
@@ -231,8 +332,9 @@
 
   <!-- ═══════════════════ GAME OVER SCREEN ═══════════════════ -->
   <div id="screen-gameover" class="screen">
-    <div class="gameover-card glass-card">
+    <div class="gameover-card glass-card premium-card">
       <div class="confetti-container" id="confettiContainer"></div>
+      <div class="gameover-glow" id="gameoverGlow"></div>
       <div id="gameoverIcon" class="gameover-icon">🏆</div>
       <h2 id="gameoverTitle">You Win!</h2>
       <p id="gameoverSubtitle">Congratulations! You cracked the code!</p>
@@ -240,11 +342,11 @@
       <div class="secrets-reveal">
         <div class="secret-box">
           <span class="secret-label" id="secretLabel1">Your Number</span>
-          <span class="secret-value" id="secretValue1">1234</span>
+          <div class="secret-digits" id="secretValue1"></div>
         </div>
         <div class="secret-box">
           <span class="secret-label" id="secretLabel2">Opponent's Number</span>
-          <span class="secret-value" id="secretValue2">5678</span>
+          <div class="secret-digits" id="secretValue2"></div>
         </div>
       </div>
 
@@ -271,8 +373,8 @@
       </div>
 
       <div class="gameover-buttons">
-        <button id="btnPlayAgain" class="btn btn-primary btn-large">🔄 Play Again</button>
-        <button id="btnExitGame" class="btn btn-secondary">🚪 Exit</button>
+        <button id="btnPlayAgain" class="btn btn-primary btn-large btn-shimmer">🔄 Play Again</button>
+        <button id="btnExitGame" class="btn btn-ghost">🚪 Exit</button>
       </div>
     </div>
   </div>

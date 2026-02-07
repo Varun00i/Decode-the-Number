@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs');
+const bcrypt = require('bcrypt');
 
 const app = express();
 const server = http.createServer(app);
@@ -12,6 +13,8 @@ const io = new Server(server, {
   pingTimeout: 60000,
   pingInterval: 25000
 });
+
+const SALT_ROUNDS = 10;
 
 // ─── Production Middleware ───────────────────────────────────────
 app.use((req, res, next) => {
@@ -32,11 +35,177 @@ app.get('/health', (req, res) => {
 const rooms = new Map();       // roomCode -> room object
 const playerRooms = new Map(); // socketId -> roomCode
 
+// ─── Player Accounts Storage ─────────────────────────────────────
+const ACCOUNTS_FILE = path.join(__dirname, 'accounts.json');
+let accounts = new Map(); // username -> { passwordHash, displayName, avatar, createdAt }
+
+// Load accounts from file on startup
+try {
+  if (fs.existsSync(ACCOUNTS_FILE)) {
+    const data = JSON.parse(fs.readFileSync(ACCOUNTS_FILE, 'utf8'));
+    accounts = new Map(Object.entries(data));
+    console.log(`Loaded ${accounts.size} player accounts.`);
+  }
+} catch (e) { console.log('No existing accounts file, starting fresh.'); }
+
+function saveAccounts() {
+  try {
+    const obj = Object.fromEntries(accounts);
+    fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(obj, null, 2));
+  } catch (e) { console.error('Failed to save accounts:', e.message); }
+}
+
+// Session tokens (in-memory, will reset on restart)
+const sessions = new Map(); // token -> { username, expiresAt }
+
+function createSession(username) {
+  const token = uuidv4() + '-' + uuidv4();
+  sessions.set(token, { username, expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000 }); // 7 days
+  return token;
+}
+
+function validateSession(token) {
+  const session = sessions.get(token);
+  if (!session) return null;
+  if (Date.now() > session.expiresAt) {
+    sessions.delete(token);
+    return null;
+  }
+  return session.username;
+}
+
+// ─── Auth API ────────────────────────────────────────────────────
+app.post('/api/signup', async (req, res) => {
+  try {
+    const { username, password, displayName } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required.' });
+    }
+    if (username.length < 3 || username.length > 16) {
+      return res.status(400).json({ error: 'Username must be 3-16 characters.' });
+    }
+    if (password.length < 4) {
+      return res.status(400).json({ error: 'Password must be at least 4 characters.' });
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      return res.status(400).json({ error: 'Username can only contain letters, numbers, and underscores.' });
+    }
+
+    const lowerUser = username.toLowerCase();
+    if (accounts.has(lowerUser)) {
+      return res.status(409).json({ error: 'Username already taken.' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    const avatarIndex = Math.floor(Math.random() * 12);
+    accounts.set(lowerUser, {
+      passwordHash,
+      displayName: displayName || username,
+      avatar: avatarIndex,
+      createdAt: Date.now()
+    });
+    saveAccounts();
+
+    // Also create stats entry
+    getOrCreateStats(displayName || username);
+
+    const token = createSession(lowerUser);
+    const acct = accounts.get(lowerUser);
+    res.json({
+      success: true,
+      token,
+      user: { username: lowerUser, displayName: acct.displayName, avatar: acct.avatar }
+    });
+  } catch (e) {
+    console.error('Signup error:', e);
+    res.status(500).json({ error: 'Server error. Try again.' });
+  }
+});
+
+app.post('/api/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required.' });
+    }
+
+    const lowerUser = username.toLowerCase();
+    const acct = accounts.get(lowerUser);
+    if (!acct) {
+      return res.status(401).json({ error: 'Invalid username or password.' });
+    }
+
+    const match = await bcrypt.compare(password, acct.passwordHash);
+    if (!match) {
+      return res.status(401).json({ error: 'Invalid username or password.' });
+    }
+
+    const token = createSession(lowerUser);
+    res.json({
+      success: true,
+      token,
+      user: { username: lowerUser, displayName: acct.displayName, avatar: acct.avatar }
+    });
+  } catch (e) {
+    console.error('Login error:', e);
+    res.status(500).json({ error: 'Server error. Try again.' });
+  }
+});
+
+app.get('/api/me', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'Not authenticated' });
+
+  const username = validateSession(token);
+  if (!username) return res.status(401).json({ error: 'Session expired' });
+
+  const acct = accounts.get(username);
+  if (!acct) return res.status(404).json({ error: 'Account not found' });
+
+  const stats = playerStats.get(acct.displayName) || { gamesPlayed: 0, wins: 0, losses: 0, winStreak: 0, bestStreak: 0 };
+  const winRate = stats.gamesPlayed > 0 ? Math.round((stats.wins / stats.gamesPlayed) * 100) : 0;
+  res.json({
+    user: { username, displayName: acct.displayName, avatar: acct.avatar },
+    stats: { ...stats, winRate }
+  });
+});
+
+app.post('/api/update-profile', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'Not authenticated' });
+
+  const username = validateSession(token);
+  if (!username) return res.status(401).json({ error: 'Session expired' });
+
+  const acct = accounts.get(username);
+  if (!acct) return res.status(404).json({ error: 'Account not found' });
+
+  const { displayName, avatar } = req.body;
+  const oldName = acct.displayName;
+
+  if (displayName && displayName.trim().length >= 1 && displayName.trim().length <= 16) {
+    acct.displayName = displayName.trim();
+  }
+  if (avatar !== undefined && avatar >= 0 && avatar <= 11) {
+    acct.avatar = avatar;
+  }
+
+  // Migrate stats to new display name
+  if (oldName !== acct.displayName && playerStats.has(oldName)) {
+    const stats = playerStats.get(oldName);
+    playerStats.delete(oldName);
+    playerStats.set(acct.displayName, stats);
+    saveStats();
+  }
+
+  saveAccounts();
+  res.json({ success: true, user: { username, displayName: acct.displayName, avatar: acct.avatar } });
+});
+
 // ─── Player Stats Storage ────────────────────────────────────────
 const STATS_FILE = path.join(__dirname, 'player-stats.json');
-let playerStats = new Map(); // playerName -> { gamesPlayed, wins, losses, winStreak, bestStreak, lastPlayed }
+let playerStats = new Map();
 
-// Load stats from file on startup
 try {
   if (fs.existsSync(STATS_FILE)) {
     const data = JSON.parse(fs.readFileSync(STATS_FILE, 'utf8'));
